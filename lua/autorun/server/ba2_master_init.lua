@@ -109,6 +109,8 @@ CreateConVar("ba2_zom_attackmode",0,FCVAR_ARCHIVE,[[Determines how zombies will 
     1: Claw]])
 CreateConVar("ba2_zom_retargeting",1,FCVAR_ARCHIVE,[[If enabled, zombies will periodically switch targets if another target is closer to them for enough time.
 This may cause stuttering, so it's recommended to disable this if you have performance issues with lots of zombies.]])
+CreateConVar("ba2_zom_corpseeat",1,FCVAR_ARCHIVE,[[If enabled, zombies will seek out and eat corpses while there are no targets within their range.]])
+
 
 CreateConVar("ba2_misc_corpselife",10,FCVAR_ARCHIVE,[[The amount of time before a zombie's corpse is cleaned up.
     Set to -1 for infinite lifetime.]],-1
@@ -296,7 +298,7 @@ function BA2_ZombieGrab(zom,ent)
         end
 
         ent:ViewPunch(Angle(10,0,0))
-    else
+    elseif ent:IsNPC() then
         ent.GrabPos = ent:GetPos()
         if ent.StopMoving then
             ent:StopMoving()

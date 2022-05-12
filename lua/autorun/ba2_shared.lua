@@ -139,7 +139,7 @@ BA2_ZombieTypes = {
 
 DMG_BIOVIRUS = 83598
 
-BA2_MODVERSION = "Main Branch Release 2, Gamma Edition v1.3.3"
+BA2_MODVERSION = "Main Branch Hotfix 2A, Gamma Edition v1.3.3"
 
 BA2_JMod = (JMod_GetArmorBiologicalResistance ~= nil)
 
