@@ -22,6 +22,17 @@ function ENT:Initialize()
         end
 
         self.decalConvar = GetConVar("ba2_misc_gibdecals"):GetBool()
+    else
+        if GetConVar("ba2_cl_lowgibs"):GetBool() then
+            local gibModels = {
+                "models/props_junk/watermelon01_chunk02a.mdl",
+                "models/props_junk/watermelon01_chunk02b.mdl",
+                "models/props_junk/watermelon01_chunk01b.mdl",
+                "models/gibs/antlion_gib_small_2.mdl",
+            }
+            self:SetModel(gibModels[math.random(1,#gibModels)])
+            self:SetMaterial("models/flesh")
+        end
     end
 end
 

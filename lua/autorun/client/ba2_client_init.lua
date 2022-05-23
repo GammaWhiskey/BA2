@@ -171,6 +171,7 @@ CreateClientConVar("ba2_cl_playervoice",-1,true,true,[[The voice your zombie wil
 )
 CreateClientConVar("ba2_cl_maskhelp",1,true,true,"If enabled, you will see a help message with chat commands when you pick up a gas mask.")
 CreateClientConVar("ba2_cl_zomdecals",1,true,true,"If enabled, zombies will be covered in blood. Turning this off may mitigate some crashes.")
+CreateClientConVar("ba2_cl_lowgibs",0,true,true,"If enabled, gibs from zombies will use a simple model and texture. Enabling this may improve performance during gibbing.")
 
 
 -- Gas mask model
@@ -309,6 +310,7 @@ hook.Add("PopulateToolMenu","ba2_options",function(panel)
         panel:CheckBox("Infection Damage Effect","ba2_cl_infdmgeff")
         panel:CheckBox("Gas Mask Help Text","ba2_cl_maskhelp")
         panel:CheckBox("Zombie Blood Decals","ba2_cl_zomdecals")
+        panel:CheckBox("Low Performance Gibs","ba2_cl_lowgibs")
 
         local comboBox = panel:ComboBox("Player Voice","ba2_cl_playervoice")
         comboBox:AddChoice("-1. Automatic",-1)

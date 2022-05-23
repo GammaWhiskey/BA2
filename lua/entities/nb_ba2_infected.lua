@@ -1065,22 +1065,28 @@ function ENT:OnTraceAttack(dmginfo,dir,trace)
 
 		self:EmitSound("physics/metal/metal_sheet_impact_bullet2.wav",80,math.random(90,110))
 	end
+
+	local dmgAmount = dmginfo:GetDamage()
+	if dmginfo:IsDamageType(DMG_BUCKSHOT) and dmgAmount >= self:Health() then
+		dmgAmount = dmgAmount * 1.5
+	end
 	if trace.HitGroup == HITGROUP_HEAD then
 		dmginfo:SetDamage(dmginfo:GetDamage() * 4)
-
-		if dmginfo:IsDamageType(DMG_BUCKSHOT) and dmginfo:GetDamage() > self:Health() then
-			dmginfo:SetDamage(dmginfo:GetDamage() * 2)
-		end
+		dmgAmount = dmgAmount * 4
 
 		if BA2_GetMaggotMode() then
 			self:EmitSound("player/crit_hit"..math.random(2,6)..".wav",95)
 		end
 
-		if GetConVar("ba2_misc_headshoteff"):GetBool() and self:Health() - dmginfo:GetDamage() <= math.random(-60,-30) then
+		if GetConVar("ba2_misc_headshoteff"):GetBool() and self:Health() - dmgAmount <= math.random(-60,-30) then
 			self.BA2_HeadshotEffect = true
 		end
-	elseif trace.HitGroup == HITGROUP_STOMACH and self:Health() - dmginfo:GetDamage() <= math.random(-20,-10) then
-		self.BA2_BodyshotEffect = true
+	elseif self:Health() - dmgAmount <= math.random(-30,-15) then
+		if trace.HitGroup == HITGROUP_STOMACH then
+			self.BA2_BodyshotEffect = true
+		elseif trace.HitGroup == HITGROUP_CHEST then
+			self.BA2_ChestshotEffect = true
+		end
 	end
 
 	local ArmBreakMultiplier = GetConVar("ba2_zom_armbreakmultiplier"):GetFloat()
@@ -1246,19 +1252,50 @@ function ENT:OnKilled(dmginfo)
 			"ValveBiped.Bip01_R_Toe0",
 		},body)
 	end
+
+
+	local function makeGibs(boneName,gibs,forceMult)
+		local bone = body:LookupBone(boneName)
+		if !bone then return end
+
+		body:EmitSound("ba2_headlessbleed")
+
+		for i,mdl in pairs(gibs) do
+			self:CreateGib(body:GetBonePosition(bone),mdl,dmginfo:GetDamageForce():GetNormalized() * 250 * (forceMult or 1))
+		end
+
+		local eff = EffectData()
+		eff:SetFlags(6)
+		eff:SetColor(0)
+		eff:SetScale(10)
+		eff:SetEntity(body)
+		eff:SetAttachment(6)
+		
+		local timer1 = body:EntIndex().."-headshot1"
+		timer.Create(timer1,0.1,math.random(17,20),function()
+			if !IsValid(body) then timer.Destroy(timer1) return end
+			local headBone = body:LookupBone(boneName)
+			if headBone ~= nil then
+				eff:SetOrigin(body:GetBonePosition(headBone))
+				util.Effect("BloodImpact",eff)
+			else
+				timer.Destroy(timer1)
+			end
+		end)
+
+		timer.Start(timer1)
+	end
+
 	if self.BA2_HeadshotEffect then
 		self:KillSounds()
 		self:EmitSound("npc/barnacle/barnacle_crunch"..math.random(2,3)..".wav",85)
 
 		local headBone = body:LookupBone("ValveBiped.Bip01_Head1")
 		if headBone ~= nil then
-			body:EmitSound("ba2_headlessbleed")
 			self:DeflateBones({
 				"ValveBiped.Bip01_Head1",
 			},body)
-	
-			local headPos = body:GetBonePosition(headBone)
-			local gibs = {
+			makeGibs("ValveBiped.Bip01_Head1",{
 				-- "models/ba2/gibs/eyel.mdl",
 				-- "models/ba2/gibs/eyer.mdl",
 				"models/ba2/gibs/headbackl.mdl",
@@ -1267,32 +1304,7 @@ function ENT:OnKilled(dmginfo)
 				"models/ba2/gibs/headfrontr.mdl",
 				"models/ba2/gibs/headtop.mdl",
 				"models/ba2/gibs/jaw.mdl"
-			}
-	
-			for i,mdl in pairs(gibs) do
-				self:CreateGib(headPos,mdl,dmginfo:GetDamageForce():GetNormalized() * 250)
-			end
-
-			local eff = EffectData()
-			eff:SetFlags(6)
-			eff:SetColor(0)
-			eff:SetScale(10)
-			eff:SetEntity(body)
-			eff:SetAttachment(6)
-			
-			local timer1 = body:EntIndex().."-headshot1"
-			timer.Create(timer1,0.1,math.random(17,20),function()
-				if !IsValid(body) then timer.Destroy(timer1) return end
-				local headBone = body:LookupBone("ValveBiped.Bip01_Head1")
-				if headBone ~= nil then
-					eff:SetOrigin(body:GetBonePosition(headBone))
-					util.Effect("BloodImpact",eff)
-				else
-					timer.Destroy(timer1)
-				end
-			end)
-
-			timer.Start(timer1)
+			})
 		end
 	end
 
@@ -1301,39 +1313,30 @@ function ENT:OnKilled(dmginfo)
 
 		local bodyBone = body:LookupBone("ValveBiped.Bip01_Spine")
 		if bodyBone ~= nil then
-			body:EmitSound("ba2_headlessbleed")
-			local bodyPos = body:GetBonePosition(bodyBone)
-			local gibs = {
+			makeGibs("ValveBiped.Bip01_Spine",{
 				"models/ba2/gibs/organs.mdl",
-				"models/ba2/gibs/midorgans.mdl"
-			}
-	
-			for i,mdl in pairs(gibs) do
-				self:CreateGib(bodyPos,mdl,dmginfo:GetDamageForce():GetNormalized() * -60)
-			end
-
-			local eff = EffectData()
-			eff:SetFlags(6)
-			eff:SetColor(0)
-			eff:SetScale(10)
-			eff:SetEntity(body)
-			eff:SetAttachment(6)
-			
-			local timer1 = body:EntIndex().."-headshot1"
-			timer.Create(timer1,0.1,math.random(17,20),function()
-				if !IsValid(body) then timer.Destroy(timer1) return end
-				local bodyBone = body:LookupBone("ValveBiped.Bip01_Spine")
-				if bodyBone ~= nil then
-					eff:SetOrigin(body:GetBonePosition(bodyBone))
-					util.Effect("BloodImpact",eff)
-				else
-					timer.Destroy(timer1)
-				end
-			end)
-
-			timer.Start(timer1)
+				"models/ba2/gibs/midorgans.mdl",
+				"models/ba2/gibs/headbackl.mdl",
+				"models/ba2/gibs/headbackr.mdl",
+				"models/ba2/gibs/headfrontl.mdl",
+			},-.35)
 		end
 	end
+
+	if self.BA2_ChestshotEffect then
+		self:EmitSound("npc/barnacle/barnacle_crunch"..math.random(2,3)..".wav",85)
+
+		local bodyBone = body:LookupBone("ValveBiped.Bip01_Spine2")
+		if bodyBone ~= nil then
+			makeGibs("ValveBiped.Bip01_Spine2",{
+				"models/ba2/gibs/headbackl.mdl",
+				"models/ba2/gibs/headbackr.mdl",
+				"models/ba2/gibs/headfrontl.mdl",
+				"models/ba2/gibs/headbackl.mdl",
+			},-.5)
+		end
+	end
+
 
 	local phys = body:GetPhysicsObject()
 	if IsValid(phys) then
